@@ -1,4 +1,6 @@
 import { createHash, randomBytes } from 'crypto';
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export type AuthRole = 'admin' | 'user';
 
@@ -17,7 +19,7 @@ interface TokenEntry {
   expiresAt: number;
 }
 
-const users = new Map<string, StoredUser>();
+const usersCollection = collection(db, 'users');
 const accessTokens = new Map<string, TokenEntry>();
 const refreshTokens = new Map<string, TokenEntry>();
 
@@ -45,33 +47,47 @@ function cleanupExpiredTokens(map: Map<string, TokenEntry>) {
   }
 }
 
-export function getUserByEmail(email: string): StoredUser | null {
-  return users.get(normalizeEmail(email)) ?? null;
-}
-
-export function getUserById(id: string): StoredUser | null {
-  return Array.from(users.values()).find((user) => user.id === id) ?? null;
-}
-
-export function registerUser(email: string, password: string, role: AuthRole = 'user'): AuthUser {
+export async function getUserByEmail(email: string): Promise<StoredUser | null> {
   const normalizedEmail = normalizeEmail(email);
-  if (users.has(normalizedEmail)) {
+  const q = query(usersCollection, where('email', '==', normalizedEmail));
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return snapshot.docs[0].data() as StoredUser;
+}
+
+export async function getUserById(id: string): Promise<StoredUser | null> {
+  const snapshot = await getDoc(doc(usersCollection, id));
+  if (!snapshot.exists()) {
+    return null;
+  }
+  return snapshot.data() as StoredUser;
+}
+
+export async function registerUser(email: string, password: string, role: AuthRole = 'user'): Promise<AuthUser> {
+  const normalizedEmail = normalizeEmail(email);
+  const existingUser = await getUserByEmail(normalizedEmail);
+
+  if (existingUser) {
     throw new Error('User already exists');
   }
 
   const user: StoredUser = {
-    id: `user-${users.size + 1}`,
+    id: `user-${Date.now()}-${randomBytes(4).toString('hex')}`,
     email: normalizedEmail,
     role,
     passwordHash: hashPassword(password),
   };
 
-  users.set(normalizedEmail, user);
+  await setDoc(doc(usersCollection, user.id), user);
   return { id: user.id, email: user.email, role: user.role };
 }
 
-export function authenticateUser(email: string, password: string): AuthUser | null {
-  const user = getUserByEmail(email);
+export async function authenticateUser(email: string, password: string): Promise<AuthUser | null> {
+  const user = await getUserByEmail(email);
   if (!user) {
     return null;
   }
@@ -125,17 +141,18 @@ export function verifyAccessToken(token: string): string | null {
   return entry.userId;
 }
 
-export function getPublicUserById(id: string): AuthUser | null {
-  const user = getUserById(id);
+export async function getPublicUserById(id: string): Promise<AuthUser | null> {
+  const user = await getUserById(id);
   if (!user) {
     return null;
   }
   return { id: user.id, email: user.email, role: user.role };
 }
 
-// Seed a default demo account.
-try {
-  registerUser('admin@example.com', 'password', 'admin');
-} catch (error) {
-  // ignore if already registered
-}
+void (async () => {
+  try {
+    await registerUser('admin@example.com', 'password', 'admin');
+  } catch (error) {
+    // ignore if already registered
+  }
+})();

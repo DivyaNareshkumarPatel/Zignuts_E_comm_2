@@ -21,6 +21,7 @@ interface ApiParams<T=any>{
 interface ErrorResponseData {
   message?: string;
   detail?: string;
+  error?: string;
 }
 
 export const api = async <T=any, R=any>({
@@ -58,7 +59,11 @@ export const api = async <T=any, R=any>({
             throw error; // Network or unexpected error, rethrow
         }
         const errData = response.data as ErrorResponseData | undefined;
-        const msg = errData?.message ?? errData?.detail;
-        throw error;
+        const msg =
+          errData?.error ??
+          errData?.message ??
+          errData?.detail ??
+          "An unexpected error occurred";
+        throw new Error(msg);
     }
 }

@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useLogin } from "@/app/auth/api/hooks";
+import { useToast } from "@/contexts/ToastProvider";
 
 export default function LoginPage() {
   const router = useRouter();
+  const toast = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const login = useLogin();
@@ -18,7 +20,7 @@ export default function LoginPage() {
       await login.mutateAsync({ email, password });
       router.push("/");
     } catch (error) {
-      // The mutation error is shown via login.error, so no further action is needed here.
+      toast.showError(error instanceof Error ? error.message : "Login failed. Please try again.");
     }
   };
 
@@ -56,13 +58,7 @@ export default function LoginPage() {
               />
             </label>
 
-            {login.isError && (
-              <div className="rounded-3xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                {login.error?.message ?? "Login failed. Please try again."}
-              </div>
-            )}
-
-            <button
+              <button
               type="submit"
               disabled={login.isPending}
               className="flex w-full items-center justify-center rounded-3xl bg-white px-5 py-3 text-base font-semibold text-zinc-950 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"

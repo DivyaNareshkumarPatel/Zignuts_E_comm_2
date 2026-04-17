@@ -30,6 +30,7 @@ export interface RefreshResponse {
 export interface SignupRequest {
   email: string;
   password: string;
+  role: "admin" | "user";
   name?: string;
 }
 

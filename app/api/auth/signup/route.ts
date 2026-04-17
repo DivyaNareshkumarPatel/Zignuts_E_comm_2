@@ -6,13 +6,14 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const email = body?.email;
   const password = body?.password;
+  const role = body?.role === 'admin' ? 'admin' : 'user';
 
   if (!email || !password) {
     return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
   }
 
   try {
-    const user = registerUser(email, password);
+    const user = await registerUser(email, password, role);
     const accessToken = createAccessToken(user.id);
     const refreshToken = createRefreshToken(user.id);
 
