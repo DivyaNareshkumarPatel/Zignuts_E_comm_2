@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -14,36 +14,56 @@ interface StoredUser extends AuthUser {
   passwordHash: string;
 }
 
-interface TokenEntry {
-  userId: string;
-  expiresAt: number;
-}
-
 const usersCollection = collection(db, 'users');
-const accessTokens = new Map<string, TokenEntry>();
-const refreshTokens = new Map<string, TokenEntry>();
 
 const ACCESS_TOKEN_TTL_MS = 15 * 60 * 1000;
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'dev-token-secret';
 
 function hashPassword(password: string) {
   return createHash('sha256').update(password).digest('hex');
-}
-
-function createToken() {
-  return randomBytes(48).toString('hex');
 }
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-function cleanupExpiredTokens(map: Map<string, TokenEntry>) {
-  const now = Date.now();
-  for (const [token, entry] of map.entries()) {
-    if (entry.expiresAt <= now) {
-      map.delete(token);
+function signToken(userId: string, type: 'access' | 'refresh', ttl: number): string {
+  const payload = JSON.stringify({ userId, type, exp: Date.now() + ttl });
+  const signature = createHmac('sha256', TOKEN_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}.${signature}`).toString('base64url');
+}
+
+function verifyToken(token: string, expectedType: 'access' | 'refresh'): string | null {
+  try {
+    const decoded = Buffer.from(token, 'base64url').toString('utf8');
+    const separatorIndex = decoded.lastIndexOf('.');
+    if (separatorIndex === -1) {
+      return null;
     }
+
+    const payload = decoded.slice(0, separatorIndex);
+    const signature = decoded.slice(separatorIndex + 1);
+    const expected = createHmac('sha256', TOKEN_SECRET).update(payload).digest('hex');
+
+    const signatureBuffer = Buffer.from(signature, 'utf8');
+    const expectedBuffer = Buffer.from(expected, 'utf8');
+
+    if (
+      signatureBuffer.length !== expectedBuffer.length ||
+      !timingSafeEqual(signatureBuffer, expectedBuffer)
+    ) {
+      return null;
+    }
+
+    const parsed = JSON.parse(payload) as { userId: string; type: 'access' | 'refresh'; exp: number };
+    if (parsed.type !== expectedType || parsed.exp <= Date.now()) {
+      return null;
+    }
+
+    return parsed.userId;
+  } catch {
+    return null;
   }
 }
 
@@ -100,45 +120,23 @@ export async function authenticateUser(email: string, password: string): Promise
 }
 
 export function createAccessToken(userId: string): string {
-  cleanupExpiredTokens(accessTokens);
-  const token = createToken();
-  accessTokens.set(token, {
-    userId,
-    expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS,
-  });
-  return token;
+  return signToken(userId, 'access', ACCESS_TOKEN_TTL_MS);
 }
 
 export function createRefreshToken(userId: string): string {
-  cleanupExpiredTokens(refreshTokens);
-  const token = createToken();
-  refreshTokens.set(token, {
-    userId,
-    expiresAt: Date.now() + REFRESH_TOKEN_TTL_MS,
-  });
-  return token;
+  return signToken(userId, 'refresh', REFRESH_TOKEN_TTL_MS);
 }
 
 export function verifyRefreshToken(token: string): string | null {
-  cleanupExpiredTokens(refreshTokens);
-  const entry = refreshTokens.get(token);
-  if (!entry) {
-    return null;
-  }
-  return entry.userId;
+  return verifyToken(token, 'refresh');
 }
 
-export function revokeRefreshToken(token: string) {
-  refreshTokens.delete(token);
+export function revokeRefreshToken(_token: string) {
+  // Refresh tokens are stateless in this implementation.
 }
 
 export function verifyAccessToken(token: string): string | null {
-  cleanupExpiredTokens(accessTokens);
-  const entry = accessTokens.get(token);
-  if (!entry) {
-    return null;
-  }
-  return entry.userId;
+  return verifyToken(token, 'access');
 }
 
 export async function getPublicUserById(id: string): Promise<AuthUser | null> {

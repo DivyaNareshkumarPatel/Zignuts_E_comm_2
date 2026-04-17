@@ -75,5 +75,6 @@ export function getCookieToken(
   cookieName: string = COOKIE_NAMES.ACCESS_TOKEN
 ): string | null {
   const value = getClientCookie(cookieName);
+  console.log(`getCookieToken: Retrieved ${cookieName} = ${value}`);
   return value ?? null;
 }

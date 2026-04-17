@@ -5,11 +5,13 @@ import { createAccessToken, createRefreshToken, getPublicUserById, revokeRefresh
 export async function POST(request: NextRequest) {
   const refreshToken = request.cookies.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
   if (!refreshToken) {
+    console.warn('No refresh token provided');
     return NextResponse.json({ error: 'Missing refresh token' }, { status: 401 });
   }
 
   const userId = verifyRefreshToken(refreshToken);
   if (!userId) {
+    console.warn('Invalid refresh token:', refreshToken);
     const response = NextResponse.json({ error: 'Invalid refresh token' }, { status: 401 });
     response.cookies.set(COOKIE_NAMES.ACCESS_TOKEN, '', {
       httpOnly: false,

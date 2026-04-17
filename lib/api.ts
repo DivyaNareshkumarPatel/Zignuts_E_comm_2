@@ -2,7 +2,7 @@
 
 import { apiClient } from "./apiClient"
 import { AxiosError } from "axios"
-import { RESPONSE_CODES, API_METHODS } from "@/constants/constants"
+import { API_METHODS } from "@/constants/constants"
 import { buildUrl } from "@/utils/urlBuilder"
 
 interface ApiParams<T=any>{
@@ -17,7 +17,7 @@ interface ApiParams<T=any>{
     module?: string
 }
 
-/** Shape of error payload we read for toast messages (backend may send message/detail). */
+/** Updated interface to include the 'error' field returned by your API routes */
 interface ErrorResponseData {
   message?: string;
   detail?: string;
@@ -35,7 +35,6 @@ export const api = async <T=any, R=any>({
     headers={},
     module = 'v1',
 }: ApiParams<T>): Promise<R> => {
-    const isServer = typeof window === 'undefined';
     const relaiveUrl = buildUrl(endpoint, pathparams, module);
     const config = {
         url: baseUrl ? `${baseUrl.replace(/\/$/, '')}${relaiveUrl}` : relaiveUrl,
@@ -49,21 +48,24 @@ export const api = async <T=any, R=any>({
         skipAuth,
         withCredentials: true,
     }
-    try{
+    
+    try {
         const response = await apiClient.request<R>(config);
         return response.data;
-    }catch(error){
+    } catch(error) {
         const axiosError = error instanceof AxiosError ? error : null;
         const response = axiosError?.response;
-        if(!response){
-            throw error; // Network or unexpected error, rethrow
+
+        if(!response) {
+            throw error; // Handle network or connection errors
         }
+
         const errData = response.data as ErrorResponseData | undefined;
-        const msg =
-          errData?.error ??
-          errData?.message ??
-          errData?.detail ??
-          "An unexpected error occurred";
+        
+        // Extract the specific error message sent by the server
+        const msg = errData?.error ?? errData?.message ?? errData?.detail ?? "An unexpected error occurred";
+        
+        // Throwing a new Error ensures React Query's error.message works correctly
         throw new Error(msg);
     }
 }
