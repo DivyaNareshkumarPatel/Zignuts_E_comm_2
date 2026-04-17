@@ -21,6 +21,8 @@ export async function POST(request: NextRequest) {
       uid: user.id,
       email: user.email,
       role: user.role,
+      accessToken,
+      refreshToken,
     });
 
     response.cookies.set(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {

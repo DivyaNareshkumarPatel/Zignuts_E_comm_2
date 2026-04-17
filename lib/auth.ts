@@ -148,11 +148,3 @@ export async function getPublicUserById(id: string): Promise<AuthUser | null> {
   }
   return { id: user.id, email: user.email, role: user.role };
 }
-
-void (async () => {
-  try {
-    await registerUser('admin@example.com', 'password', 'admin');
-  } catch (error) {
-    // ignore if already registered
-  }
-})();

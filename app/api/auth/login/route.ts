@@ -24,6 +24,8 @@ export async function POST(request: NextRequest) {
     uid: user.id,
     email: user.email,
     role: user.role,
+    accessToken,
+    refreshToken,
   });
 
   response.cookies.set(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
@@ -33,7 +35,6 @@ export async function POST(request: NextRequest) {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   });
-
   response.cookies.set(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, {
     httpOnly: true,
     path: '/',
