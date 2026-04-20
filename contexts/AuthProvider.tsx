@@ -28,17 +28,14 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     useAuthStore();
 
   useEffect(() => {
-    // 1. Listen to Firebase Authentication state changes directly
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // 2. Fetch the user's role from Firestore
           const userDocRef = doc(db, "users", firebaseUser.uid);
           const userDocSnap = await getDoc(userDocRef);
 
           const userRole = (userDocSnap.data()?.role as AuthRole) || "user";
 
-          // 3. Update the global Zustand state (this also sets loading to false)
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email || "",
@@ -46,15 +43,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
           });
         } catch (error) {
           console.error("Error fetching user role from Firestore:", error);
-          clearUser(); // Sets loading to false and clears state
+          clearUser();
         }
       } else {
-        // No user is signed in to Firebase
         clearUser();
       }
     });
-
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, [setUser, clearUser]);
 

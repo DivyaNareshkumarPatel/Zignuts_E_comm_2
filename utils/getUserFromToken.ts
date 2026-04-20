@@ -1,13 +1,8 @@
-/**
- * Decode the access token (Firebase JWT) from the cookie to retrieve the user's ID.
- * This is a client-side only utility.
- */
 export function getUserIdFromToken(): string | null {
   if (typeof window === 'undefined') return null;
 
   try {
     const cookies = document.cookie.split(';');
-    // Make sure this matches your COOKIE_NAMES.ACCESS_TOKEN value (usually 'auth_token')
     const tokenCookie = cookies.find(c => c.trim().startsWith('auth_token='));
     if (!tokenCookie) return null;
 

@@ -44,7 +44,6 @@ export function useAddProduct() {
         module: "",
       }),
     onSuccess: () => {
-      // Invalidate products query in case there is one
       queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });

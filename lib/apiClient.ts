@@ -24,15 +24,11 @@ export const apiClient = axios.create({
   baseURL: BASE_URL,
 });
 
-/**
- * Request Interceptor - Manually attach the token to the header
- */
 apiClient.interceptors.request.use(
   (config) => {
     if (isSkipAuth(config)) return config;
     if (typeof window === 'undefined') return config;
 
-    // Explicitly grab the token and put it in the Authorization header
     const accessToken = getCookieToken(COOKIE_NAMES.ACCESS_TOKEN);
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
@@ -43,9 +39,6 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/**
- * Response Interceptor - Handle 401 Unauthorized
- */
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {

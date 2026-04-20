@@ -132,7 +132,6 @@ export function verifyRefreshToken(token: string): string | null {
 }
 
 export function revokeRefreshToken(_token: string) {
-  // Refresh tokens are stateless in this implementation.
 }
 
 export function verifyAccessToken(token: string): string | null {

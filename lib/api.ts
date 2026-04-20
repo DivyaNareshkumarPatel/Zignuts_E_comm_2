@@ -5,7 +5,7 @@ import { AxiosError } from "axios"
 import { API_METHODS } from "@/constants/constants"
 import { buildUrl } from "@/utils/urlBuilder"
 
-interface ApiParams<T=any>{
+interface ApiParams<T = any> {
     method: keyof typeof API_METHODS,
     endpoint: string,
     data?: T,
@@ -17,22 +17,21 @@ interface ApiParams<T=any>{
     module?: string
 }
 
-/** Updated interface to include the 'error' field returned by your API routes */
 interface ErrorResponseData {
-  message?: string;
-  detail?: string;
-  error?: string;
+    message?: string;
+    detail?: string;
+    error?: string;
 }
 
-export const api = async <T=any, R=any>({
+export const api = async <T = any, R = any>({
     method,
     endpoint,
     data,
-    queryParams={},
+    queryParams = {},
     skipAuth = false,
     pathparams = {},
     baseUrl,
-    headers={},
+    headers = {},
     module = 'v1',
 }: ApiParams<T>): Promise<R> => {
     const relaiveUrl = buildUrl(endpoint, pathparams, module);
@@ -41,31 +40,28 @@ export const api = async <T=any, R=any>({
         method,
         params: queryParams,
         data,
-        headers:{
+        headers: {
             'Content-Type': 'application/json',
             ...headers,
         },
         skipAuth,
         withCredentials: true,
     }
-    
+
     try {
         const response = await apiClient.request<R>(config);
         return response.data;
-    } catch(error) {
+    } catch (error) {
         const axiosError = error instanceof AxiosError ? error : null;
         const response = axiosError?.response;
 
-        if(!response) {
-            throw error; // Handle network or connection errors
+        if (!response) {
+            throw error;
         }
 
         const errData = response.data as ErrorResponseData | undefined;
-        
-        // Extract the specific error message sent by the server
         const msg = errData?.error ?? errData?.message ?? errData?.detail ?? "An unexpected error occurred";
-        
-        // Throwing a new Error ensures React Query's error.message works correctly
+
         throw new Error(msg);
     }
 }

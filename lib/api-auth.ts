@@ -3,18 +3,13 @@ import { cookies } from 'next/headers';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import { COOKIE_NAMES } from '@/constants/constants';
 
-/**
- * Extract and verify the Firebase ID token from the request.
- */
 export async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
-  // 1. Try to get token from Authorization header (Set by Axios)
   const authHeader = request.headers.get('Authorization');
   let token = authHeader?.startsWith('Bearer ') ? authHeader.split('Bearer ')[1] : null;
 
-  // 2. Fallback: check the Next.js cookies directly
   if (!token) {
     const cookieStore = await cookies();
-    token = cookieStore.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
+    token = cookieStore.get(COOKIE_NAMES.ACCESS_TOKEN)?.value || null;
   }
 
   if (!token) return null;
@@ -41,9 +36,6 @@ export async function requireAuth(
   return { userId };
 }
 
-/**
- * Require the caller to be an admin.
- */
 export async function requireAdmin(
   request: NextRequest
 ): Promise<{ userId: string } | NextResponse> {

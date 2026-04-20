@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
-// Public — anyone can view products (for storefront)
 export async function GET() {
     try {
         const snapshot = await adminDb.collection("products").get();
@@ -17,7 +16,6 @@ export async function GET() {
     }
 }
 
-// Admin only — create new product
 export async function POST(request: NextRequest) {
     const auth = await requireAdmin(request);
     if (isAuthError(auth)) return auth;

@@ -11,11 +11,10 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ success: true });
 
-    // Set the Firebase ID Token in the cookie so your API routes can verify it
     response.cookies.set(COOKIE_NAMES.ACCESS_TOKEN, idToken, {
-      httpOnly: false, // false so the client can read it if needed
+      httpOnly: false,
       path: '/',
-      maxAge: 60 * 60, // 1 hour (Firebase tokens expire in 1 hour)
+      maxAge: 60 * 60,
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     });

@@ -20,20 +20,15 @@ export default function LoginPage() {
     setIsPending(true);
 
     try {
-      // 1. Sign in with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
-      // 2. Get the Firebase ID Token
       const idToken = await userCredential.user.getIdToken();
-
-      // 3. Send token to our Next.js API to set the cookie
       await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken })
       });
 
-      // 4. Fetch the user's role from Firestore to determine routing
       const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
       const role = userDoc.data()?.role || "user";
 

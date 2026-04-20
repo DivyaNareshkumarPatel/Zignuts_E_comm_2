@@ -21,17 +21,14 @@ export default function SignupPage() {
     setIsPending(true);
 
     try {
-      // 1. Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // 2. Save the role in Firestore database
       await setDoc(doc(db, "users", userCredential.user.uid), {
         email: email,
         role: role,
         createdAt: new Date().toISOString()
       });
 
-      // 3. Get the token and set the cookie
       const idToken = await userCredential.user.getIdToken();
       await fetch('/api/auth/login', {
         method: 'POST',

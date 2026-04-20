@@ -8,7 +8,6 @@ export async function PATCH(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
-    // Only admins can update order status
     const auth = await requireAdmin(request);
     if (isAuthError(auth)) return auth;
 

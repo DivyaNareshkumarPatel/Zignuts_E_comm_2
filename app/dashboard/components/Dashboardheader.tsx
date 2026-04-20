@@ -12,13 +12,13 @@ export default function DashboardHeader() {
 
     const handleLogout = async () => {
         try {
-            // 1. Sign out from Firebase Auth
+            // 1. Sign out from Firebase Auth on the client
             await signOut(auth);
 
             // 2. Clear Next.js server cookies
             await fetch('/api/auth/logout', { method: 'POST' });
 
-            // 3. Redirect user
+            // 3. Redirect back to login
             toast.showSuccess("Logged out successfully");
             router.push('/auth/login');
         } catch (error) {

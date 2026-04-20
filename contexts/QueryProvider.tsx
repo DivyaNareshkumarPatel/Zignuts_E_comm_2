@@ -5,7 +5,6 @@ function makeQueryClient() {
     return new QueryClient({
         defaultOptions: {
             queries: {
-                // to avoid refetching immediately on the client
                 staleTime: 60 * 1000,
             },
         },
@@ -14,7 +13,6 @@ function makeQueryClient() {
 
 let browserQueryClient: QueryClient | undefined = undefined;
 
-// create a new query client if not exists
 function getQueryClient() {
     if (isServer) {
         return makeQueryClient();
@@ -26,7 +24,6 @@ function getQueryClient() {
     }
 }
 
-// The QueryClient manages the cache and coordinates all of your data fetching.
 export default function QueryProvider({ children }: { children: React.ReactNode }) {
     const queryClient = getQueryClient();
 
@@ -36,6 +33,3 @@ export default function QueryProvider({ children }: { children: React.ReactNode 
         </QueryClientProvider>
     );
 }
-
-// queryClient is for cache management, query state tracking.
-// QueryClientProvider is for context distribution, lifecycle management, it makes the queryClient available to all child components
