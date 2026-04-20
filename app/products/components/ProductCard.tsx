@@ -30,8 +30,6 @@ export default function ProductCard({ product, categories }: ProductCardProps) {
       router.push("/auth/login");
       return;
     }
-
-    // Merge with existing cart items
     const existing = cartItems || [];
     const existingItem = existing.find((i) => i.id === product.id);
 
@@ -98,19 +96,18 @@ export default function ProductCard({ product, categories }: ProductCardProps) {
         <button
           onClick={handleAddToCart}
           disabled={addToCart.isPending || isOutOfStock}
-          className={`mt-6 flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition ${
-            isOutOfStock
+          className={`mt-6 flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition ${isOutOfStock
               ? "cursor-not-allowed bg-slate-100 text-slate-400"
               : "bg-slate-950 text-white hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
-          }`}
+            }`}
         >
           {isOutOfStock
             ? "Out of Stock"
             : addToCart.isPending
-            ? "Adding..."
-            : userId
-            ? "Add to Cart"
-            : "Login to Add to Cart"}
+              ? "Adding..."
+              : userId
+                ? "Add to Cart"
+                : "Login to Add to Cart"}
         </button>
       </div>
     </div>

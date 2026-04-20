@@ -2,7 +2,9 @@
 
 import { createContext, ReactNode, useContext, useEffect, useMemo } from "react";
 import { useAuthStore } from "@/store/slices/authSlice";
-import { api } from "@/lib/api";
+import { auth, db } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 export type AuthRole = "admin" | "user";
 
@@ -21,46 +23,40 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-interface RefreshResponse {
-  user?: {
-    uid: string;
-    email: string;
-    role: AuthRole;
-  };
-}
-
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const { uid, email, role, loading, setUser, clearUser, setLoadingComplete } =
     useAuthStore();
 
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const data = await api<void, RefreshResponse>({
-          method: "POST",
-          endpoint: "/auth/refresh",
-          skipAuth: true,
-          module: "",
-        });
+    // 1. Listen to Firebase Authentication state changes directly
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // 2. Fetch the user's role from Firestore
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
 
-        if (data.user) {
+          const userRole = (userDocSnap.data()?.role as AuthRole) || "user";
+
+          // 3. Update the global Zustand state (this also sets loading to false)
           setUser({
-            uid: data.user.uid,
-            email: data.user.email,
-            role: data.user.role,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            role: userRole,
           });
-        } else {
-          setLoadingComplete();
+        } catch (error) {
+          console.error("Error fetching user role from Firestore:", error);
+          clearUser(); // Sets loading to false and clears state
         }
-      } catch {
-        setLoadingComplete();
+      } else {
+        // No user is signed in to Firebase
+        clearUser();
       }
-    };
+    });
 
-    if (loading) {
-      initializeAuth();
-    }
-  }, [loading, setUser, setLoadingComplete]);
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [setUser, clearUser]);
 
   const isAuthenticated = Boolean(uid);
   const isAdmin = role === "admin";

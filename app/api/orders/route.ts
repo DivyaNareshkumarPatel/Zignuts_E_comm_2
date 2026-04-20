@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, addDoc, doc, updateDoc, increment, setDoc, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { FieldValue } from 'firebase-admin/firestore';
+import { adminDb } from '@/lib/firebase-admin';
 import { requireAuth, requireAdmin, isAuthError } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Invalid order data' }, { status: 400 });
         }
 
-        const orderRef = await addDoc(collection(db, 'orders'), {
+        // 1. Create the order
+        const orderRef = await adminDb.collection('orders').add({
             userId,
             items,
             total,
@@ -27,14 +28,16 @@ export async function POST(request: NextRequest) {
             createdAt: new Date().toISOString()
         });
 
+        // 2. Decrement stock for each product
         for (const item of items) {
-            const productRef = doc(db, 'products', item.id);
-            await updateDoc(productRef, {
-                stock: increment(-item.quantity)
+            const productRef = adminDb.collection('products').doc(item.id);
+            await productRef.update({
+                stock: FieldValue.increment(-item.quantity)
             });
         }
 
-        await setDoc(doc(db, 'carts', userId), { items: [] });
+        // 3. Clear the user's cart
+        await adminDb.collection('carts').doc(userId).set({ items: [] });
 
         return NextResponse.json({ success: true, orderId: orderRef.id }, { status: 201 });
     } catch (error) {
@@ -63,13 +66,14 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
-        const querySnapshot = await getDocs(q);
-        let orders = querySnapshot.docs.map(doc => ({
+        // Fetch orders sorted by newest first
+        const snapshot = await adminDb.collection('orders').orderBy('createdAt', 'desc').get();
+        let orders = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-        })) as Array<{ id: string; userId: string; [key: string]: unknown }>;
+        })) as Array<{ id: string; userId: string;[key: string]: unknown }>;
 
+        // Filter by user if a userId was provided
         if (userId) {
             orders = orders.filter(o => o.userId === userId);
         }
