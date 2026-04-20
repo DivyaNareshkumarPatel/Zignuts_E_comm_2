@@ -17,6 +17,13 @@ interface ToastContextValue {
   showInfo: (message: string) => void;
 }
 
+// interface ToastContextValue {
+//   notify: (message: string, type?: ToastType) => void;
+//   showSuccess: (message: string) => void;
+//   showError: (message: string) => void;
+//   showInfo: (message: string) => void;
+// }
+
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 export default function ToastProvider({ children }: { children: ReactNode }) {
@@ -50,13 +57,12 @@ export default function ToastProvider({ children }: { children: ReactNode }) {
           {toasts.map((toast) => (
             <div
               key={toast.id}
-              className={`pointer-events-auto rounded-3xl border px-5 py-4 shadow-lg transition duration-200 ${
-                toast.type === "error"
+              className={`pointer-events-auto rounded-3xl border px-5 py-4 shadow-lg transition duration-200 ${toast.type === "error"
                   ? "border-red-400 bg-red-600 text-white"
                   : toast.type === "success"
-                  ? "border-emerald-400 bg-emerald-600 text-white"
-                  : "border-white/10 bg-zinc-950 text-white"
-              }`}
+                    ? "border-emerald-400 bg-emerald-600 text-white"
+                    : "border-white/10 bg-zinc-950 text-white"
+                }`}
             >
               <p className="text-sm leading-6">{toast.message}</p>
             </div>
