@@ -10,19 +10,16 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     
-    const docRef = doc(db, "products", id);
+    const docRef = doc(db, "categories", id);
     await updateDoc(docRef, {
       name: body.name,
-      price: Number(body.price),
-      stock: Number(body.stock),
-      categoryId: body.categoryId || null,
       updatedAt: new Date().toISOString()
     });
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error("PUT Error:", error);
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
   }
 }
 
@@ -32,12 +29,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const docRef = doc(db, "products", id);
+    const docRef = doc(db, "categories", id);
     await deleteDoc(docRef);
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error("DELETE Error:", error);
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to delete category' }, { status: 500 });
   }
 }

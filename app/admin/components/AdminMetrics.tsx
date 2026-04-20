@@ -1,23 +1,35 @@
-const stats = [
-  { label: "Total orders", value: "142", description: "Sales recorded in the last 30 days." },
-  { label: "Pending shipments", value: "24", description: "Orders ready to ship today." },
-  { label: "New customers", value: "37", description: "Fresh signups this month." },
-  { label: "Store visits", value: "18.2k", description: "Traffic in the last 7 days." },
-];
+"use client";
+
+import { useProducts } from "@/app/admin/api/products";
+import { useCategories } from "@/app/admin/api/categories";
 
 export default function AdminMetrics() {
+  const { data: products } = useProducts();
+  const { data: categories } = useCategories();
+
+  const totalProducts = products?.length || 0;
+  const totalCategories = categories?.length || 0;
+  
+  // Calculate low stock items (e.g. stock less than 10)
+  const lowStockThreshold = 10;
+  const lowStockCount = products?.filter(p => p.stock < lowStockThreshold).length || 0;
+
   return (
-    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-      {stats.map((item) => (
-        <div
-          key={item.label}
-          className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-8 shadow-sm shadow-slate-200/70 transition hover:-translate-y-1"
-        >
-          <p className="text-xs uppercase tracking-[0.35em] text-pink-600">{item.label}</p>
-          <p className="mt-4 text-4xl font-semibold text-slate-950">{item.value}</p>
-          <p className="mt-3 text-sm leading-6 text-slate-500">{item.description}</p>
-        </div>
-      ))}
+    <div className="grid gap-5 sm:grid-cols-3">
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-sm font-medium text-slate-500">Total Products</p>
+        <p className="mt-2 text-3xl font-semibold text-slate-950">{totalProducts}</p>
+      </div>
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-sm font-medium text-slate-500">Total Categories</p>
+        <p className="mt-2 text-3xl font-semibold text-slate-950">{totalCategories}</p>
+      </div>
+      <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-sm font-medium text-slate-500">Low Stock Alerts</p>
+        <p className={`mt-2 text-3xl font-semibold ${lowStockCount > 0 ? "text-red-600" : "text-emerald-600"}`}>
+          {lowStockCount}
+        </p>
+      </div>
     </div>
   );
 }
