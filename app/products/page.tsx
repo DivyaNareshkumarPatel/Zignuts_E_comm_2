@@ -37,12 +37,18 @@ export default function ProductsPage() {
                 Discover our latest arrivals and timeless classics carefully curated to elevate your style.
               </p>
             </div>
-            <div>
+            <div className="flex items-center gap-3">
+               <Link
+                 href="/dashboard"
+                 className="inline-flex items-center justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+               >
+                 My Account
+               </Link>
                <Link
                  href="/"
                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"
                >
-                 Go back home
+                 Go home
                </Link>
             </div>
           </div>

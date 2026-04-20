@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
+// Public — anyone can view products (for storefront)
 export async function GET() {
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
@@ -16,7 +18,11 @@ export async function GET() {
     }
 }
 
-export async function POST(request: Request) {
+// Admin only — create new product
+export async function POST(request: NextRequest) {
+    const auth = await requireAdmin(request);
+    if (isAuthError(auth)) return auth;
+
     try {
         const body = await request.json();
 

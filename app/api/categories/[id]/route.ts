@@ -1,15 +1,19 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { id } = await params;
     const body = await request.json();
-    
+
     const docRef = doc(db, "categories", id);
     await updateDoc(docRef, {
       name: body.name,
@@ -24,14 +28,15 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireAdmin(request);
+  if (isAuthError(auth)) return auth;
+
   try {
     const { id } = await params;
-    const docRef = doc(db, "categories", id);
-    await deleteDoc(docRef);
-
+    await deleteDoc(doc(db, "categories", id));
     return NextResponse.json({ success: true, id });
   } catch (error) {
     console.error("DELETE Error:", error);

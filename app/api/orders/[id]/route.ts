@@ -2,14 +2,18 @@ import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
 export async function PATCH(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
+    // Only admins can update order status
+    const auth = await requireAdmin(request);
+    if (isAuthError(auth)) return auth;
+
     try {
         const { id } = await context.params;
-
         const { status }: { status: string } = await request.json();
 
         if (!status) {
@@ -20,7 +24,7 @@ export async function PATCH(
         }
 
         const orderRef = doc(db, 'orders', id);
-        await updateDoc(orderRef, { status });
+        await updateDoc(orderRef, { status, updatedAt: new Date().toISOString() });
 
         return NextResponse.json({ success: true });
     } catch (error) {

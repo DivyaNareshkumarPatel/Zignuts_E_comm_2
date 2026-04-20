@@ -4,6 +4,7 @@ import AdminHeader from "@/app/admin/components/AdminHeader";
 import AdminMetrics from "./components/AdminMetrics";
 import AdminProductList from "@/app/admin/components/AdminProductList";
 import AdminCategoryList from "@/app/admin/components/AdminCategoryList";
+import AdminOrderList from "@/app/admin/components/AdminOrderList";
 import { COOKIE_NAMES } from "@/constants/constants";
 import {
   createAccessToken,
@@ -73,6 +74,7 @@ export default async function AdminDashboardPage() {
           <AdminMetrics />
 
           <div className="grid gap-8 lg:grid-cols-1">
+            <AdminOrderList />
             <AdminProductList />
             <AdminCategoryList />
           </div>

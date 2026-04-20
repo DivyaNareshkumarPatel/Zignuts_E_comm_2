@@ -133,7 +133,7 @@ export default function AdminProductList() {
                         {getCategoryName(product.categoryId)}
                       </span>
                     </td>
-                    <td className="px-6 py-4">${product.price.toFixed(2)}</td>
+                    <td className="px-6 py-4">₹{product.price.toFixed(2)}</td>
                     <td className="px-6 py-4">{product.stock}</td>
                     <td className="px-6 py-4">{new Date(product.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right space-x-2">
