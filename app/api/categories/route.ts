@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
 import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
 // Public — anyone can view categories (for storefront filtering)
 export async function GET() {
     try {
-        const querySnapshot = await getDocs(collection(db, "categories"));
-        const categories = querySnapshot.docs.map(doc => ({
+        const snapshot = await adminDb.collection("categories").get();
+        const categories = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
@@ -30,7 +29,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
         }
 
-        const docRef = await addDoc(collection(db, "categories"), {
+        const docRef = await adminDb.collection("categories").add({
             name: body.name,
             createdAt: new Date().toISOString()
         });

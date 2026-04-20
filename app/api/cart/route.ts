@@ -9,8 +9,6 @@ export async function POST(request: NextRequest) {
 
     try {
         const { userId, items } = await request.json();
-
-        // Prevent users from writing to another user's cart
         if (userId !== auth.userId) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
@@ -35,8 +33,6 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId');
 
     if (!userId) return NextResponse.json({ error: 'User ID required' }, { status: 400 });
-
-    // Prevent users from reading another user's cart
     if (userId !== auth.userId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }

@@ -9,8 +9,6 @@ export default function AdminMetrics() {
 
   const totalProducts = products?.length || 0;
   const totalCategories = categories?.length || 0;
-  
-  // Calculate low stock items (e.g. stock less than 10)
   const lowStockThreshold = 10;
   const lowStockCount = products?.filter(p => p.stock < lowStockThreshold).length || 0;
 

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { collection, getDocs, addDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
 import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
 // Public — anyone can view products (for storefront)
 export async function GET() {
     try {
-        const querySnapshot = await getDocs(collection(db, "products"));
-        const products = querySnapshot.docs.map(doc => ({
+        const snapshot = await adminDb.collection("products").get();
+        const products = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
@@ -26,7 +25,7 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
-        const docRef = await addDoc(collection(db, "products"), {
+        const docRef = await adminDb.collection("products").add({
             name: body.name,
             price: Number(body.price),
             stock: Number(body.stock),

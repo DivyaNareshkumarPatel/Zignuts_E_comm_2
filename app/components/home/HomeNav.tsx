@@ -13,12 +13,10 @@ export default function HomeNav() {
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/10 bg-slate-950/80 px-6 py-4 backdrop-blur-md sm:px-8">
-      {/* Brand */}
       <Link href="/" className="text-base font-semibold tracking-tight text-white">
         ShopX
       </Link>
 
-      {/* Links */}
       <div className="flex items-center gap-2">
         <Link
           href="/products"

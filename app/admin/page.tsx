@@ -7,8 +7,6 @@ import AdminCategoryList from "@/app/admin/components/AdminCategoryList";
 import AdminOrderList from "@/app/admin/components/AdminOrderList";
 import { COOKIE_NAMES } from "@/constants/constants";
 import {
-  createAccessToken,
-  createRefreshToken,
   getPublicUserById,
   verifyAccessToken,
   verifyRefreshToken,
@@ -20,47 +18,34 @@ async function checkAdminAuth() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(COOKIE_NAMES.ACCESS_TOKEN)?.value;
   const refreshToken = cookieStore.get(COOKIE_NAMES.REFRESH_TOKEN)?.value;
+
+  // 1. Check Access Token
   if (accessToken) {
     const userId = verifyAccessToken(accessToken);
     if (userId) {
       const user = await getPublicUserById(userId);
       if (user?.role === "admin") {
-        return;
+        return; // Authorized via access token
       }
     }
   }
 
+  // 2. Check Refresh Token
   if (refreshToken) {
     const userId = verifyRefreshToken(refreshToken);
     if (userId) {
       const user = await getPublicUserById(userId);
       if (user?.role === "admin") {
-        const newAccessToken = createAccessToken(user.id);
-        const newRefreshToken = createRefreshToken(user.id);
-
-        cookieStore.set({
-          name: COOKIE_NAMES.ACCESS_TOKEN,
-          value: newAccessToken,
-          path: "/",
-          maxAge: 15 * 60,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-        });
-
-        cookieStore.set({
-          name: COOKIE_NAMES.REFRESH_TOKEN,
-          value: newRefreshToken,
-          path: "/",
-          maxAge: 7 * 24 * 60 * 60,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-        });
-
+        // Authorized via refresh token.
+        // We CANNOT set cookies in a Server Component, but we allow the render.
+        // The client-side application (e.g., AuthProvider/Axios interceptor) 
+        // will automatically hit /api/auth/refresh to update the cookies.
         return;
       }
     }
   }
 
+  // 3. If neither token is valid, redirect to login
   redirect("/auth/login");
 }
 

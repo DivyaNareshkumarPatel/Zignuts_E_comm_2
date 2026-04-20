@@ -18,8 +18,6 @@ export default function UserDashboardPage() {
   const toast = useToast();
   const [userId, setUserId] = useState<string | null>(null);
   const [tab, setTab] = useState<"cart" | "orders">("cart");
-
-  // Resolve userId on client side
   useEffect(() => {
     const id = getUserIdFromToken();
     if (!id) {
@@ -34,7 +32,6 @@ export default function UserDashboardPage() {
   const addToCart = useAddToCart();
   const placeOrder = usePlaceOrder();
 
-  // Derived cart total
   const cartTotal = (cartItems || []).reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -78,7 +75,6 @@ export default function UserDashboardPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="mx-auto max-w-4xl px-6 py-5 flex items-center justify-between">
           <div>
@@ -95,24 +91,21 @@ export default function UserDashboardPage() {
       </header>
 
       <div className="mx-auto max-w-4xl px-6 py-8">
-        {/* Tabs */}
         <div className="flex gap-1 rounded-2xl bg-slate-200 p-1 w-fit mb-8">
           {(["cart", "orders"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`rounded-xl px-6 py-2.5 text-sm font-semibold capitalize transition ${
-                tab === t
+              className={`rounded-xl px-6 py-2.5 text-sm font-semibold capitalize transition ${tab === t
                   ? "bg-white text-slate-950 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
-              }`}
+                }`}
             >
               {t === "cart" ? `Cart (${cartItems?.length ?? 0})` : "Order History"}
             </button>
           ))}
         </div>
 
-        {/* ── CART TAB ── */}
         {tab === "cart" && (
           <div className="space-y-6">
             {isCartLoading ? (
@@ -137,12 +130,10 @@ export default function UserDashboardPage() {
               </div>
             ) : (
               <>
-                {/* Cart items */}
                 <div className="rounded-[1.5rem] bg-white border border-slate-200 overflow-hidden shadow-sm">
                   <div className="divide-y divide-slate-100">
                     {cartItems.map((item) => (
                       <div key={item.id} className="flex items-center gap-5 p-5">
-                        {/* Product icon placeholder */}
                         <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-slate-100">
                           <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -153,8 +144,6 @@ export default function UserDashboardPage() {
                           <p className="font-semibold text-slate-900 truncate">{item.name}</p>
                           <p className="mt-0.5 text-sm text-slate-500">₹{item.price.toFixed(2)} each</p>
                         </div>
-
-                        {/* Quantity controls */}
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => updateQuantity(item, -1)}
@@ -179,7 +168,6 @@ export default function UserDashboardPage() {
                   </div>
                 </div>
 
-                {/* Order summary */}
                 <div className="rounded-[1.5rem] bg-white border border-slate-200 p-6 shadow-sm">
                   <div className="flex items-center justify-between text-sm text-slate-600">
                     <span>Subtotal</span>
@@ -206,8 +194,6 @@ export default function UserDashboardPage() {
             )}
           </div>
         )}
-
-        {/* ── ORDERS TAB ── */}
         {tab === "orders" && (
           <div className="space-y-4">
             {isOrdersLoading ? (
@@ -227,7 +213,6 @@ export default function UserDashboardPage() {
             ) : (
               orders.map((order) => (
                 <div key={order.id} className="rounded-[1.5rem] bg-white border border-slate-200 overflow-hidden shadow-sm">
-                  {/* Order header */}
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 px-6 py-4">
                     <div>
                       <p className="text-xs font-mono text-slate-400">Order #{order.id.slice(0, 10)}</p>
@@ -241,17 +226,14 @@ export default function UserDashboardPage() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                          statusColors[order.status] ?? "bg-slate-100 text-slate-700"
-                        }`}
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusColors[order.status] ?? "bg-slate-100 text-slate-700"
+                          }`}
                       >
                         {order.status}
                       </span>
                       <span className="font-semibold text-slate-950">₹{order.total?.toFixed(2)}</span>
                     </div>
                   </div>
-
-                  {/* Order items */}
                   <div className="divide-y divide-slate-50">
                     {order.items.map((item) => (
                       <div key={item.id} className="flex items-center justify-between px-6 py-3">

@@ -3,7 +3,6 @@ import Link from "next/link";
 export default function HomeHero() {
   return (
     <section className="relative overflow-hidden bg-slate-950 text-white">
-      {/* Subtle noise/grain texture overlay */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.06)_0%,_transparent_70%)]" />
 
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-28 sm:px-8 lg:px-10 lg:py-36 text-center">
@@ -35,7 +34,6 @@ export default function HomeHero() {
         </div>
       </div>
 
-      {/* Fade into the page below */}
       <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-50 to-transparent" />
     </section>
   );
