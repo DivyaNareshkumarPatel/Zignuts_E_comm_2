@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { adminDb } from '@/lib/firebase-admin';
 import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
 export async function PUT(
@@ -11,21 +10,13 @@ export async function PUT(
   if (isAuthError(auth)) return auth;
 
   try {
-    const { id } = await params;
     const body = await request.json();
+    const { id } = await params;
+    await adminDb.collection("products").doc(id).update(body);
 
-    const docRef = doc(db, "products", id);
-    await updateDoc(docRef, {
-      name: body.name,
-      price: Number(body.price),
-      stock: Number(body.stock),
-      categoryId: body.categoryId || null,
-      updatedAt: new Date().toISOString()
-    });
-
-    return NextResponse.json({ success: true, id });
+    return NextResponse.json({ success: true, id, ...body });
   } catch (error) {
-    console.error("PUT Error:", error);
+    console.error("PUT Product Error:", error);
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
@@ -39,10 +30,11 @@ export async function DELETE(
 
   try {
     const { id } = await params;
-    await deleteDoc(doc(db, "products", id));
+    await adminDb.collection("products").doc(id).delete();
+
     return NextResponse.json({ success: true, id });
   } catch (error) {
-    console.error("DELETE Error:", error);
+    console.error("DELETE Product Error:", error);
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }

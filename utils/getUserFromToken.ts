@@ -9,14 +9,12 @@ export function getUserIdFromToken(): string | null {
     const token = tokenCookie.split('=')[1]?.trim();
     if (!token) return null;
 
-    // A standard JWT has 3 parts separated by dots: Header.Payload.Signature
     const parts = token.split('.');
     if (parts.length !== 3) return null;
 
-    const base64Url = parts[1]; // We only care about the Payload
+    const base64Url = parts[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
 
-    // Properly decode base64 to a JSON string
     const jsonPayload = decodeURIComponent(
       window.atob(base64).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
@@ -25,7 +23,6 @@ export function getUserIdFromToken(): string | null {
 
     const payload = JSON.parse(jsonPayload);
 
-    // Firebase ID tokens store the ID in 'user_id' or 'sub'
     return payload.user_id || payload.sub || null;
   } catch (error) {
     console.error("Error decoding Firebase token:", error);

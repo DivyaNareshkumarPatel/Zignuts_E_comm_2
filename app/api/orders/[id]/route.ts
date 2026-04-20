@@ -1,36 +1,27 @@
-import { NextResponse } from 'next/server';
-import { NextRequest } from 'next/server';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { NextRequest, NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase-admin';
 import { requireAdmin, isAuthError } from '@/lib/api-auth';
 
 export async function PATCH(
     request: NextRequest,
-    context: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const auth = await requireAdmin(request);
     if (isAuthError(auth)) return auth;
 
     try {
-        const { id } = await context.params;
-        const { status }: { status: string } = await request.json();
+        const { status } = await request.json();
+        const { id } = await params;
 
         if (!status) {
-            return NextResponse.json(
-                { error: 'Status is required' },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: 'Status is required' }, { status: 400 });
         }
 
-        const orderRef = doc(db, 'orders', id);
-        await updateDoc(orderRef, { status, updatedAt: new Date().toISOString() });
+        await adminDb.collection("orders").doc(id).update({ status });
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true, id, status });
     } catch (error) {
         console.error("PATCH Order Error:", error);
-        return NextResponse.json(
-            { error: 'Failed to update order' },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to update order status' }, { status: 500 });
     }
 }

@@ -1,11 +1,3 @@
-/**
- * Client-safe token utilities
- * These functions can be used in both client and server components
- *
- * Note: Server-side token getters are in token-server.ts
- */
-
-// Re-export cookie utilities from the centralized client cookie utility
 export {
   getCookieToken,
   getAccessToken,
