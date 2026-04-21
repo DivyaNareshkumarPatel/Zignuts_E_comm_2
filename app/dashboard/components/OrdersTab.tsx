@@ -8,7 +8,6 @@ const statusColors: Record<string, string> = {
     Delivered: "bg-emerald-100 text-emerald-800",
 };
 
-// Explicitly defining only the properties needed for this component
 interface OrdersTabProps {
     userId: string;
 }

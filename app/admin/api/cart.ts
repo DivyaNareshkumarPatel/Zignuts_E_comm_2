@@ -9,6 +9,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   categoryId?: string;
+  imageUrl?: string;
 }
 
 export function useCart(userId: string | null) {

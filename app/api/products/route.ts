@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { adminDb } from '@/lib/firebase-admin';
 import { requireAdmin, isAuthError } from '@/lib/api-auth';
+export const revalidate = 3600;
 
 export async function GET() {
     try {
@@ -9,7 +11,12 @@ export async function GET() {
             id: doc.id,
             ...doc.data()
         }));
-        return NextResponse.json(products);
+
+        return NextResponse.json(products, {
+            headers: {
+                'X-Cache-Status': 'Cached'
+            }
+        });
     } catch (error) {
         console.error("GET Error:", error);
         return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
@@ -30,6 +37,9 @@ export async function POST(request: NextRequest) {
             categoryId: body.categoryId || null,
             createdAt: new Date().toISOString()
         });
+
+        revalidatePath('/api/products');
+        revalidatePath('/products');
 
         return NextResponse.json({ id: docRef.id, ...body }, { status: 201 });
     } catch (error) {

@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCart, useAddToCart, usePlaceOrder, CartItem } from "@/app/admin/api/cart";
+import Image from "next/image";
+import { useEffect } from "react";
+import { useAddToCart, usePlaceOrder, useCart as useApiCart } from "@/app/admin/api/cart";
 import { useToast } from "@/contexts/ToastProvider";
+import { useCart } from "@/hooks/useCart";
+import { CartItem } from "@/store/cartStore";
 
 interface CartTabProps {
     userId: string;
@@ -11,43 +15,58 @@ interface CartTabProps {
 
 export default function CartTab({ userId, onOrderPlaced }: CartTabProps) {
     const toast = useToast();
-    const { data: cartItems, isLoading: isCartLoading } = useCart(userId);
-    const addToCart = useAddToCart();
+    const apiAddToCart = useAddToCart();
     const placeOrder = usePlaceOrder();
-
-    const cartTotal = (cartItems || []).reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-    );
+    const { data: dbCartItems, isLoading: isDbCartLoading } = useApiCart(userId);
+    const {
+        isHydrated,
+        items: localCartItems,
+        addToCart,
+        removeFromCart,
+        clearCart,
+        setCart,
+        totalPrice: cartTotal
+    } = useCart();
+    useEffect(() => {
+        if (dbCartItems) {
+            setCart(dbCartItems);
+        }
+    }, [dbCartItems, setCart]);
 
     const updateQuantity = async (item: CartItem, delta: number) => {
         const newQty = item.quantity + delta;
         let updatedItems: CartItem[];
 
         if (newQty <= 0) {
-            updatedItems = (cartItems || []).filter((i) => i.id !== item.id);
+            removeFromCart(item.id);
+            updatedItems = localCartItems.filter((i) => i.id !== item.id);
         } else {
-            updatedItems = (cartItems || []).map((i) =>
+            addToCart({ ...item, quantity: delta });
+            updatedItems = localCartItems.map((i) =>
                 i.id === item.id ? { ...i, quantity: newQty } : i
             );
         }
-
-        await addToCart.mutateAsync({ userId, items: updatedItems });
+        try {
+            await apiAddToCart.mutateAsync({ userId, items: updatedItems });
+        } catch (error) {
+            toast.showError("Failed to update cart on server.");
+        }
     };
 
     const handlePlaceOrder = async () => {
-        if (!cartItems || cartItems.length === 0) return;
+        if (!localCartItems || localCartItems.length === 0) return;
 
         try {
-            await placeOrder.mutateAsync({ userId, items: cartItems, total: cartTotal });
+            await placeOrder.mutateAsync({ userId, items: localCartItems, total: cartTotal });
+            clearCart();
             toast.showSuccess("Order placed successfully! 🎉");
-            onOrderPlaced(); // Switch to orders tab
+            onOrderPlaced();
         } catch {
             toast.showError("Failed to place order. Please try again.");
         }
     };
 
-    if (isCartLoading) {
+    if (!isHydrated || isDbCartLoading) {
         return (
             <div className="rounded-[1.5rem] bg-white border border-slate-200 p-10 text-center text-sm text-slate-500 animate-pulse">
                 Loading your cart...
@@ -55,7 +74,7 @@ export default function CartTab({ userId, onOrderPlaced }: CartTabProps) {
         );
     }
 
-    if (!cartItems || cartItems.length === 0) {
+    if (!localCartItems || localCartItems.length === 0) {
         return (
             <div className="rounded-[1.5rem] bg-white border border-slate-200 p-16 text-center">
                 <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
@@ -79,12 +98,22 @@ export default function CartTab({ userId, onOrderPlaced }: CartTabProps) {
         <div className="space-y-6">
             <div className="rounded-[1.5rem] bg-white border border-slate-200 overflow-hidden shadow-sm">
                 <div className="divide-y divide-slate-100">
-                    {cartItems.map((item) => (
+                    {localCartItems.map((item) => (
                         <div key={item.id} className="flex items-center gap-5 p-5">
-                            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-slate-100">
-                                <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
+                            <div className="relative flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-slate-100 overflow-hidden">
+                                {item.imageUrl ? (
+                                    <Image
+                                        src={item.imageUrl}
+                                        alt={item.name}
+                                        fill
+                                        className="object-cover"
+                                        sizes="64px"
+                                    />
+                                ) : (
+                                    <svg className="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                )}
                             </div>
 
                             <div className="flex-1 min-w-0">
